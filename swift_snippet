@@ -1,0 +1,160 @@
+#swift snippet
+
+
+// Get, save local and get data image from url
+struct ShowPosterFileManager {
+    var showID:Int = 0
+    var posterURL:String = ""
+    
+    var imageLocalURL:NSURL
+    var imageLocalUrlPath:String
+    
+    
+    
+    init(ID:Int,URL:String) {
+        self.showID = ID
+        self.posterURL = URL
+        
+        let nsDocumentDirectory = FileManager.SearchPathDirectory.documentDirectory
+        let nsUserDomainMask    = FileManager.SearchPathDomainMask.userDomainMask
+        let paths               = NSSearchPathForDirectoriesInDomains(nsDocumentDirectory, nsUserDomainMask, true)
+        let dirPath          = paths.first
+        
+        self.imageLocalURL = NSURL(fileURLWithPath: dirPath!).appendingPathComponent("\(showID).jpeg")! as NSURL
+        
+        
+        self.imageLocalUrlPath  = imageLocalURL.absoluteString!
+    }
+    
+    
+    init(ID:Int) {
+        self.init(ID:ID,URL: "")
+    }
+    
+    
+    public func saveShowPoster() {
+        DispatchQueue.global(qos: DispatchQoS.background.qosClass).async {
+            do {
+                let data = try Data(contentsOf: URL(string: self.posterURL)!)
+                let getImage = UIImage(data: data)
+                try UIImageJPEGRepresentation(getImage!, 1.0)?.write(to: self.imageLocalURL as URL)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: Notification.Name("addedSusseful"), object: nil)
+                    return
+                }
+            }
+            catch {
+                return
+            }
+        }
+    }
+    
+    public func getPosterLocalData() -> UIImage {
+        return  UIImage(contentsOfFile: self.imageLocalURL.path!)!
+        // Do whatever you want with the image
+    }
+    
+    
+}
+
+
+// Usage
+let df = ShowPosterFileManager(ID: id, URL: url)
+df.saveShowPoster()
+
+
+let df = ShowPosterFileManager(ID: Id)
+let image = df.getPosterLocalData()
+
+
+---------------------------------------------------
+
+
+// Usage hex string color
+extension UIColor {
+    convenience init(hexString: String) {
+        let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int = UInt32()
+        Scanner(string: hex).scanHexInt32(&int)
+        let a, r, g, b: UInt32
+        switch hex.characters.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
+    }
+}
+
+// Usage
+ = UIColor.init(hexString: "#fafafa")
+
+
+---------------------------------------------------
+// String extension
+extension String {
+    var first: String {
+        return String(characters.prefix(1))
+    }
+    var last: String {
+        return String(characters.suffix(1))
+    }
+    var uppercaseFirst: String {
+        return first.uppercased() + String(characters.dropFirst())
+    }
+    
+    func trim() -> String
+    {
+        return self.trimmingCharacters(in: NSCharacterSet.whitespaces)
+    }
+}
+
+---------------------------------------------------
+// Hide status bar
+UIApplication.shared.statusBarStyle = .lightContent
+self.navigationController?.setNavigationBarHidden(true, animated: true)
+
+---------------------------------------------------
+// Add watemark to image
+let myLayer = CALayer()
+let myImage = UIImage(named: "icon")?.cgImage
+myLayer.frame = self.topPoster.bounds
+myLayer.contents = myImage
+myLayer.contentsGravity = kCAGravityCenter
+myLayer.isGeometryFlipped = true
+self.myimage.layer.addSublayer(myLayer)
+
+---------------------------------------------------
+// Add tab handler to image
+let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.myimageTapped(tapGestureRecognizer:)))
+self.myimage.isUserInteractionEnabled = true
+self.myimage.addGestureRecognizer(tapGestureRecognizer)
+---------------------------------------------------
+
+// Get AVPlayer play status
+extension AVPlayer {
+    var isPlaying: Bool {
+        return rate != 0 && error == nil
+    }
+}
+
+---------------------------------------------------
+
+// Alert
+func alert(_ title: String, message: String) {
+    let vc = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.alert)
+    vc.addAction(UIAlertAction(title: "Ok", style: .cancel, handler: nil))
+    present(vc, animated: true, completion: nil)
+}
+
+---------------------------------------------------
+// Get notification token from Firebase
+if let refreshedToken = FIRInstanceID.instanceID().token() {
+       print("InstanceID token: \(refreshedToken)")
+}
+
